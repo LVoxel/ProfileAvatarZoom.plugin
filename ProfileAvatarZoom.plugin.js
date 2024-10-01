@@ -6,6 +6,7 @@
  * @authorId 528185437399810081
  * @website https://github.com/LVoxel/ProfileAvatarZoom.plugin
  * @updateurl https://raw.githubusercontent.com/LVoxel/ProfileAvatarZoom.plugin/refs/heads/main/ProfileAvatarZoom.plugin.js
+ * @source https://github.com/LVoxel/ProfileAvatarZoom.plugin
  */
 
 (() => {
