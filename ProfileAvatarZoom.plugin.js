@@ -36,7 +36,10 @@
         appendAvatarLinkMenuGroup(menu, userId) {
             const user = UserStore.getUser(userId);
             if (user && user.avatar) {
-                const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=1024`;
+                const isAnimated = user.avatar.startsWith("a_");
+                const extension = isAnimated ? "gif" : "png";
+                const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${extension}?size=1024`;
+                
                 menu.props.children.splice(
                     menu.props.children.length - 1,
                     0,
