@@ -1,4 +1,4 @@
-# ProfileAvatarContextMenuV2
+# ProfileAvatarZoomV2
 
 <div align="center">
   
@@ -34,7 +34,7 @@
 ---
 
 <div align="center">
-  <p>Разработано с ❤️ by <a href="https://github.com/salyamiii">salyamiii</a></p>
+  <p>Разработано с ❤️ by <a href="https://github.com/LVoxel">salyamiii</a></p>
   <p>
     <a href="https://github.com/LVoxel/ProfileAvatarZoom.plugin/stargazers">⭐ Star</a> •
     <a href="https://github.com/LVoxel/ProfileAvatarZoom.plugin/fork">🔱 Fork</a> •
