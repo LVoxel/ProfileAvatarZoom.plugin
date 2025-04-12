@@ -5,8 +5,8 @@
  * @author salyamiii
  * @authorId 528185437399810081
  * @website https://github.com/LVoxel/ProfileAvatarZoom.plugin
- * @updateurl https://raw.githubusercontent.com/LVoxel/ProfileAvatarZoom.plugin/refs/heads/main/ProfileAvatarZoom.plugin.js
- * @source https://github.com/LVoxel/ProfileAvatarZoom.plugin
+ * @updateurl https://raw.githubusercontent.com/LVoxel/ProfileAvatarZoom.plugin/refs/heads/main/ProfileAvatarZoom2.plugin.js
+ * @source https://raw.githubusercontent.com/LVoxel/ProfileAvatarZoom.plugin/refs/heads/main/ProfileAvatarZoom2.plugin.js
  */
 
 module.exports = class ProfileAvatarContextMenuV2 {
