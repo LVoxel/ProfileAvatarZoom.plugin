@@ -1,6 +1,6 @@
 /**
  * @name ProfileAvatarContextMenuV2
- * @version 2.0.5
+ * @version 2.0.6
  * @description Плагин для просмотра аватара и баннера в Discord
  * @author salyamiii
  * @authorId 528185437399810081
