@@ -4,7 +4,7 @@
   
 ![Discord Banner](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)
 ![BetterDiscord Plugin](https://img.shields.io/badge/BetterDiscord-Plugin-3a71c1.svg?style=for-the-badge)
-![Version](https://img.shields.io/badge/Version-2.0.5-green.svg?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-2.0.7-green.svg?style=for-the-badge)
 
 </div>
 
