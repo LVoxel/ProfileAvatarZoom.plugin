@@ -1,6 +1,6 @@
 /**
  * @name ProfileAvatarContextMenuV2
- * @version 2.0.6
+ * @version 2.0.7
  * @description Плагин для просмотра аватара и баннера в Discord
  * @author salyamiii
  * @authorId 528185437399810081
@@ -40,7 +40,6 @@ module.exports = class ProfileAvatarContextMenuV2 {
 
     stop() {
         BdApi.ContextMenu.unpatch("user-context", this.handleUserContextMenu);
-        // Удаляем добавленные стили
         BdApi.DOM.removeStyle("ProfileAvatarDraggableWindow");
         // Закрываем активное окно, если оно есть
         if (this.activeWindow) {
@@ -209,6 +208,53 @@ module.exports = class ProfileAvatarContextMenuV2 {
             .profile-avatar-section:nth-child(2) {
                 animation-delay: 0.1s;
             }
+            
+            /* Новые стили для индикатора загрузки */
+            .profile-avatar-loader-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 180px;
+                margin-bottom: 20px;
+            }
+            .profile-avatar-loader {
+                width: 50px;
+                height: 50px;
+                border: 5px solid rgba(114, 137, 218, 0.2);
+                border-radius: 50%;
+                border-top-color: #7289da;
+                animation: spin 1s ease-in-out infinite;
+                margin-bottom: 15px;
+            }
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+            .profile-avatar-loader-text {
+                color: #b9bbbe;
+                font-size: 14px;
+                animation: pulse 1.5s ease-in-out infinite;
+            }
+            @keyframes pulse {
+                0% { opacity: 0.6; }
+                50% { opacity: 1; }
+                100% { opacity: 0.6; }
+            }
+            .profile-avatar-img-container {
+                position: relative;
+                min-height: 150px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 12px;
+            }
+            .profile-avatar-img-loading {
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            .profile-avatar-img-loaded {
+                opacity: 1;
+            }
         `;
         BdApi.DOM.addStyle("ProfileAvatarDraggableWindow", styles);
     }
@@ -291,22 +337,70 @@ module.exports = class ProfileAvatarContextMenuV2 {
     }
 
     /**
-     * Создает секцию для просмотра медиа (аватар или баннер)
+     * Создает индикатор загрузки
+     * @param {string} label - Метка для индикатора
+     * @returns {Element} DOM-элемент индикатора загрузки
+     */
+    createLoader(label) {
+        const loaderContainer = document.createElement("div");
+        loaderContainer.className = "profile-avatar-loader-container";
+        
+        const loader = document.createElement("div");
+        loader.className = "profile-avatar-loader";
+        loaderContainer.appendChild(loader);
+        
+        const loaderText = document.createElement("div");
+        loaderText.className = "profile-avatar-loader-text";
+        loaderText.textContent = `Загрузка...`;
+        loaderContainer.appendChild(loaderText);
+        
+        return loaderContainer;
+    }
+
+    /**
+     * Создает секцию для просмотра медиа (аватар или баннер) с индикатором загрузки
      * @param {Object} options - Параметры секции
      * @returns {Element} DOM-элемент секции
      */
     createMediaSection({ url, label, warning = false }) {
-        // Создаем контейнер
         const section = document.createElement("div");
         section.className = "profile-avatar-section";
         
-        // Создаем изображение
+        const imgContainer = document.createElement("div");
+        imgContainer.className = "profile-avatar-img-container";
+        const loader = this.createLoader(label);
+        imgContainer.appendChild(loader);
+        
         const img = document.createElement("img");
         img.src = url;
-        img.className = "profile-avatar-img";
+        img.className = "profile-avatar-img profile-avatar-img-loading";
         img.title = `🖱️ Нажмите, чтобы открыть ${label.toLowerCase()}`;
         img.onclick = () => window.open(url, "_blank");
-        section.appendChild(img);
+        
+        // Обработчик загрузки изображения
+        img.onload = () => {
+            if (loader.parentNode) {
+                loader.parentNode.removeChild(loader);
+            }
+            img.classList.add("profile-avatar-img-loaded");
+        };
+        
+        img.onerror = () => {
+            if (loader.querySelector(".profile-avatar-loader-text")) {
+                loader.querySelector(".profile-avatar-loader-text").textContent = `⚠️ Ошибка загрузки ${label.toLowerCase()}`;
+                loader.querySelector(".profile-avatar-loader").style.display = "none";
+            }
+            
+            // Через 3 секунды удаляем индикатор ошибки
+            setTimeout(() => {
+                if (loader.parentNode) {
+                    loader.parentNode.removeChild(loader);
+                }
+            }, 3000);
+        };
+        
+        imgContainer.appendChild(img);
+        section.appendChild(imgContainer);
         
         // Добавляем предупреждение, если нужно
         if (warning) {
@@ -342,20 +436,20 @@ module.exports = class ProfileAvatarContextMenuV2 {
      * Закрывает окно с анимацией
      * @param {Element} window - Окно, которое нужно закрыть
      */
-	closePreviewWindow(window) {
-		if (!window) return;
+    closePreviewWindow(window) {
+        if (!window) return;
 
-		window.classList.add("closing");
+        window.classList.add("closing");
 
-		setTimeout(() => {
-			if (window.parentNode) {
-				window.parentNode.removeChild(window);
-			}
-			if (this.activeWindow === window) {
-				this.activeWindow = null;
-			}
-		}, 300); // Время должно совпадать с длительностью transition (0.2s + запас 100ms)
-	}
+        setTimeout(() => {
+            if (window.parentNode) {
+                window.parentNode.removeChild(window);
+            }
+            if (this.activeWindow === window) {
+                this.activeWindow = null;
+            }
+        }, 300); // Время должно совпадать с длительностью transition (0.2s + запас 100ms)
+    }
 
     /**
      * Переключает видимость имени пользователя
@@ -375,11 +469,7 @@ module.exports = class ProfileAvatarContextMenuV2 {
             this.closePreviewWindow(this.activeWindow);
         }
 
-        const { avatarUrl, bannerUrl, isInvalidBanner, username } = await this.getUserMediaUrls(userId);
-        
-        if (!avatarUrl) return;
-
-        // Создаем окно
+        // Создаем окно с базовым контентом и индикатором загрузки данных пользователя
         const window = document.createElement("div");
         window.className = "profile-avatar-draggable-window";
         this.activeWindow = window;
@@ -390,15 +480,8 @@ module.exports = class ProfileAvatarContextMenuV2 {
         const title = document.createElement("div");
         title.className = "profile-avatar-window-title";
         
-        const baseTitle = document.createTextNode("✅ Профиль");
+        const baseTitle = document.createTextNode("🔍 Загрузка профиля...");
         title.appendChild(baseTitle);
-        
-        const usernameSpan = document.createElement("span");
-        usernameSpan.className = "hidden-username";
-        usernameSpan.textContent = `@${username}`;
-        title.appendChild(usernameSpan);
-
-        title.onclick = () => this.toggleUsername(usernameSpan);
         
         const closeButton = document.createElement("button");
         closeButton.className = "profile-avatar-window-close";
@@ -411,9 +494,51 @@ module.exports = class ProfileAvatarContextMenuV2 {
         header.appendChild(closeButton);
         window.appendChild(header);
 
-        // Содержимое окна
         const content = document.createElement("div");
         content.className = "profile-avatar-window-content";
+        
+        const initialLoader = this.createLoader("профиля");
+        content.appendChild(initialLoader);
+        
+        window.appendChild(content);
+
+        // Добавляем класс для отключения анимации, добавляем окно в DOM и настраиваем "перетаскивание"
+        window.classList.add("no-translate");
+        document.body.appendChild(window);
+        this.makeDraggable(window, header);
+        window.style.top = "50%";
+        window.style.left = "50%";
+        
+        // Добавляем класс visible для появления окна
+        requestAnimationFrame(() => {
+            window.classList.add("visible");
+            setTimeout(() => {
+                window.classList.remove("no-translate");
+            }, 300);
+        });
+
+        // Получаем данные пользователя
+        const { avatarUrl, bannerUrl, isInvalidBanner, username } = await this.getUserMediaUrls(userId);
+        
+        if (!avatarUrl) {
+            initialLoader.querySelector(".profile-avatar-loader-text").textContent = "Не удалось загрузить профиль";
+            initialLoader.querySelector(".profile-avatar-loader").style.display = "none";
+            return;
+        }
+
+        title.innerHTML = "";
+        const updatedBaseTitle = document.createTextNode("✅ Профиль");
+        title.appendChild(updatedBaseTitle);
+        
+        const usernameSpan = document.createElement("span");
+        usernameSpan.className = "hidden-username";
+        usernameSpan.textContent = `@${username}`;
+        title.appendChild(usernameSpan);
+
+        title.onclick = () => this.toggleUsername(usernameSpan);
+
+        // Удаляем начальный индикатор загрузки
+        content.removeChild(initialLoader);
 
         // Добавляем баннер, если он есть
         if (bannerUrl) {
@@ -429,14 +554,6 @@ module.exports = class ProfileAvatarContextMenuV2 {
             url: avatarUrl,
             label: "Аватар"
         }));
-
-        window.appendChild(content);
-
-        document.body.appendChild(window);
-        this.makeDraggable(window, header);
-        requestAnimationFrame(() => {
-            window.classList.add("visible");
-        });
     }
 
     /**
@@ -444,44 +561,59 @@ module.exports = class ProfileAvatarContextMenuV2 {
      * @param {Element} element - Элемент, который нужно перетаскивать
      * @param {Element} handle - Элемент, за который можно тянуть
      */
-	makeDraggable(element, handle) {
-		let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-		let isDragging = false;
-	
-		handle.onmousedown = dragMouseDown;
-	
-		function dragMouseDown(e) {
-			e.preventDefault();
-			
-			pos3 = e.clientX;
-			pos4 = e.clientY;
+    makeDraggable(element, handle) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        let isDragging = false;
         
-			document.onmouseup = closeDragElement;
-			document.onmousemove = elementDrag;
-			
-			isDragging = true;
-		}
+        handle.onmousedown = dragMouseDown;
+        
+        function dragMouseDown(e) {
+            e.preventDefault();
+            
+            // Перед началом перетаскивания сбрасываем transform
+            if (element.style.transform.includes("translate(-50%, -50%)")) {
+                const rect = element.getBoundingClientRect();
+                element.style.top = rect.top + "px";
+                element.style.left = rect.left + "px";
+                element.style.transform = "none";
+                
+                element.classList.add("no-translate");
+            }
+            
+            pos3 = e.clientX;
+            pos4 = e.clientY;
+            
+            document.onmouseup = closeDragElement;
+            document.onmousemove = elementDrag;
+            
+            isDragging = true;
+        }
 
-		function elementDrag(e) {
-			if (!isDragging) return;
+        function elementDrag(e) {
+            if (!isDragging) return;
 
-			e.preventDefault();
+            e.preventDefault();
 
-			pos1 = pos3 - e.clientX;
-			pos2 = pos4 - e.clientY;
-			pos3 = e.clientX;
-			pos4 = e.clientY;
+            pos1 = pos3 - e.clientX;
+            pos2 = pos4 - e.clientY;
+            pos3 = e.clientX;
+            pos4 = e.clientY;
 
-			element.style.top = (element.offsetTop - pos2) + "px";
-			element.style.left = (element.offsetLeft - pos1) + "px";
-		}
+            // Обновляем позицию с учетом смещения
+            element.style.top = (element.offsetTop - pos2) + "px";
+            element.style.left = (element.offsetLeft - pos1) + "px";
+        }
 
-		function closeDragElement() {
-			document.onmouseup = null;
-			document.onmousemove = null;
-			isDragging = false;
-		}
-	}
+        function closeDragElement() {
+            document.onmouseup = null;
+            document.onmousemove = null;
+            isDragging = false;
+            
+            setTimeout(() => {
+                element.classList.remove("no-translate");
+            }, 100);
+        }
+    }
 
     /**
      * Обработчик для контекстного меню пользователя
